@@ -1,0 +1,30 @@
+# Generic editor
+*~
+*.bak
+
+# vim
+*.swp
+Session.vim
+Sessionx.vim
+.netrwhist
+
+# ctags
+tags
+.tags
+
+# Windows
+Thumbs.db
+$RECYCLE.BIN/
+
+# Linux
+.directory
+.Trash-*
+
+# Object files
+*.o
+
+# b64 encoding script
+scripts/b64encode
+
+# Build directory
+build/
