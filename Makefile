@@ -22,9 +22,12 @@ TARGET     :=  sokoban
 IMGSCRIPT  :=  b64encode
 PRINTSCRIPT := print.sh
 
-IMAGES     :=  player.png
-IMAGES     +=  wall.png
+IMAGES     :=  free.png
 IMAGES     +=  box.png
+IMAGES     +=  boxtarget.png
+IMAGES     +=  player.png
+IMAGES     +=  target.png
+IMAGES     +=  wall.png
 
 GENSOURCES := $(addprefix image_, $(IMAGES:.png=.c))
 GENHEADERS := $(addprefix image_, $(IMAGES:.png=.h))
@@ -62,7 +65,7 @@ $(BUILDDIR)/%.o: $(SOURCEDIR)/%.c $(addprefix $(SOURCEDIR)/, $(HEADERS))
 $(SCRIPTDIR)/$(IMGSCRIPT): $(SCRIPTDIR)/$(IMGSCRIPT).c
 	@#echo " [CC]      $@"
 	@/bin/sh $(SCRIPTDIR)/$(PRINTSCRIPT) " [CC]      $@"
-	@$(CC) -Wall -Wextra -Wpedantic $^ -o $@
+	@$(CC) -g -Wall -Wextra -Wpedantic $^ -o $@
 	
 $(SOURCEDIR)/image_%.c: $(RESDIR)/%.png $(SCRIPTDIR)/$(IMGSCRIPT)
 	@#echo " [GEN]     $@"

@@ -282,6 +282,7 @@ bool generate_h(char **out, char *hguard, char *variable) {
     }
     *out[0] = '\0';
 
+
     // Add header guard
     append_string(out, &out_len, "\n#ifndef ");
     append_string(out, &out_len, hguard);
@@ -289,8 +290,17 @@ bool generate_h(char **out, char *hguard, char *variable) {
     append_string(out, &out_len, hguard);
     append_string(out, &out_len, "\n");
 
+    // Add warning
+    append_string(out, &out_len, "\n// This file is generated automatically"
+                                 " - all changes will be overwritten!\n");
+
     // Add variable declaration
-    append_string(out, &out_len, "\nconst char *b64image_");
+    append_string(out, &out_len, "\nunsigned long b64image_");
+    append_string(out, &out_len, variable);
+    append_string(out, &out_len, "_length;\n");
+
+  //append_string(out, &out_len, "\nconst char *b64image_");
+    append_string(out, &out_len, "\nchar *b64image_");
     append_string(out, &out_len, variable);
     append_string(out, &out_len, ";\n");
 
@@ -305,7 +315,7 @@ bool generate_h(char **out, char *hguard, char *variable) {
         free(*out);
         return false;
     }
-    *(out)[out_len - 1] = '\0';
+    (*out)[out_len - 1] = '\0';
 
     return true;
 }
@@ -321,8 +331,17 @@ bool generate_c(char **out, char *b64, char *variable) {
     }
     *out[0] = '\0';
 
+    // Add warning
+    append_string(out, &out_len, "\n// This file is generated automatically"
+                                 " - all changes will be overwritten!\n");
+
     // Add variable definition
-    append_string(out, &out_len, "\nconst char *b64image_");
+    append_string(out, &out_len, "\nunsigned long b64image_");
+    append_string(out, &out_len, variable);
+    append_string(out, &out_len, "_length = 0;\n");
+
+  //append_string(out, &out_len, "\nconst char *b64image_");
+    append_string(out, &out_len, "\nchar *b64image_");
     append_string(out, &out_len, variable);
     append_string(out, &out_len, " = \n");
 
