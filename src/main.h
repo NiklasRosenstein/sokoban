@@ -10,12 +10,14 @@
 
 #include "image.h"
 #include "board.h"
+#include "soko.h"
 
-bool loadIMG_from_file(SDL_Surface **image, const char *filename);
 
-bool loadIMG_from_buffer(SDL_Surface **image, const char *buffer, const int length);
+bool initialize();
 
-bool initialize(SDL_Window**);
+void deinitialize();
+
+void do_command(SDL_Keycode key);
 
 int main(int argc, char* argv[]);
 

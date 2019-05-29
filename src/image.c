@@ -1,16 +1,19 @@
 
 #include "image.h"
 
-SDL_Surface *IMG_BOX;
-SDL_Surface *IMG_BOXTARGET;
-SDL_Surface *IMG_FREE;
-SDL_Surface *IMG_PLAYER;
-SDL_Surface *IMG_TARGET;
-SDL_Surface *IMG_WALL;
-
-
-static size_t b64_decoded_size(const char* b64);
+static size_t b64_decoded_size(const char *b64);
 static inline bool b64_is_valid_char(char c);
+
+static int IMAGES_COUNT = 6;
+
+static SDL_Surface **IMAGES_SDL[] = {
+    &IMG_BOX,
+    &IMG_BOXTARGET,
+    &IMG_FREE,
+    &IMG_PLAYER,
+    &IMG_TARGET,
+    &IMG_WALL
+};
 
 static char **IMAGES[] = {
     &b64image_box,
@@ -30,9 +33,6 @@ static size_t *IMAGES_LENGTH[] = {
     &b64image_wall_length
 };
 
-static int IMAGES_COUNT = 6;
-
-
 void deinitialize_images() {
     for (int i = 0; i < IMAGES_COUNT; i++) {
         free(*(IMAGES[i]));
@@ -42,18 +42,6 @@ void deinitialize_images() {
 }
 
 bool initialize_images() {
-    //char **images[4];
-    //images[0] = &b64image_box;
-    //images[1] = &b64image_player;
-    //images[2] = &b64image_target;
-    //images[3] = &b64image_wall;
-
-    //size_t *lengths[4];
-    //lengths[0] = &b64image_box_length;
-    //lengths[1] = &b64image_player_length;
-    //lengths[2] = &b64image_target_length;
-    //lengths[3] = &b64image_wall_length;
-
     for (int i = 0; i < IMAGES_COUNT; i++) {
         // Skip already initialized images
         if (*(IMAGES_LENGTH[i]) != 0) {
@@ -71,12 +59,17 @@ bool initialize_images() {
 
         *(IMAGES[i]) = bin;
         *(IMAGES_LENGTH[i]) = len;
+
+
+        // Create SDL Surface from binary
+        loadIMG_from_buffer((IMAGES_SDL[i]), *(IMAGES[i]), *(IMAGES_LENGTH[i]));
     }
 
     return true;
 }
 
 bool b64_decode(char **out, size_t *out_len, const char* b64) {
+    //TODO: Create this on the fly
     int b64invs[800] = { 62, -1, -1, -1, 63, 52, 53, 54, 55, 56, 57, 58,
                     59, 60, 61, -1, -1, -1, -1, -1, -1, -1,  0,  1,
                      2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13,
@@ -156,6 +149,7 @@ bool b64_decode(char **out, size_t *out_len, const char* b64) {
 
 }
 
+// TODO: Remove this function
 static inline bool b64_is_valid_char(char c) {
     if (c >= '0' && c <= '9')
         return true;
@@ -168,7 +162,7 @@ static inline bool b64_is_valid_char(char c) {
     return false;
 }
 
-static size_t b64_decoded_size(const char* b64) {
+static size_t b64_decoded_size(const char *b64) {
     if (b64 == NULL) {
         return 0;
     }
@@ -193,3 +187,44 @@ static size_t b64_decoded_size(const char* b64) {
 
     return bin_len;
 }
+
+bool loadIMG_from_file(SDL_Surface **image, const char *filename) {
+    // Cut off the file ending (last 3 characters)
+    const char *ending = "";
+    if (strlen(filename) > 3) {
+        ending = &(filename[strlen(filename) - 3]);
+    }
+
+    // Decide depending on file ending which method to use
+    *image = NULL;
+    if (strcmp(ending, "bmp") == 0) {
+        *image = SDL_LoadBMP(filename);
+    } else {
+        *image = IMG_Load(filename);
+    }
+    if (*image == NULL) {
+        fprintf(stderr, "Could not load image '%s', SDL_Error: '%s'\n", filename, SDL_GetError());
+        return false;
+    }
+
+    return true;
+}
+
+bool loadIMG_from_buffer(SDL_Surface **image, const char *buffer, const int length) {
+    // Create SDL_RWops from buffer (this does not copy memory!)
+    SDL_RWops *rw = SDL_RWFromConstMem(buffer, length);
+
+    // Copy buffer into SDL_Surface and free SDL_RWops
+    SDL_Surface *temp = IMG_Load_RW(rw, 0);
+    //SDL_RWclose(rw);
+    if (temp == NULL) {
+        fprintf(stderr, "Could not load image from buffer\n");
+        fprintf(stderr, "IMG_Load_RW: '%s'\n", IMG_GetError());
+        return false;
+    }
+
+    *image = temp;
+
+    return true;
+}
+

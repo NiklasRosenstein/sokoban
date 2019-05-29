@@ -8,26 +8,34 @@
 #include <SDL.h>
 
 #include "image.h"
+#include "board.h"
 
-const char *board;
+
+char BOARD[];
 
 const uint8_t BOARD_HEIGHT;
 const uint8_t BOARD_WIDTH;
 
 const char BOARD_FREE;
 const char BOARD_BOX;
-const char BOARD_Target;
-const char BOARD_BOXTarget;
+const char BOARD_TARGET;
+const char BOARD_BOXTARGET;
 const char BOARD_WALL;
 
 SDL_Surface *WINSURFACE;
 SDL_Window *WINDOW;
 
+char board_get(int x, int y);
+
+void board_set(int x, int y, char b);
+
 int board_targets_left();
 
-void draw_fields(const int xy[][2], const int length);
+void show_fields(const int xy[][2], const int length);
 
-void draw_field(const int x, const int y);
+void show_field(const int x, const int y);
 
-void draw_board();
+void show_board();
+
+
 #endif

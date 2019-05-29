@@ -45,35 +45,42 @@ TAGS+      :=  $(subst $(SOURCEDIR),$(BUILDDIR), $(HEADERS:.h=.tags))
 TAGFILE    :=  tags
 
 
-.PHONY: all clean
+.PHONY: all clean debug optimized
 
 all: $(BUILDDIR)/$(TARGET) $(addprefix $(SOURCEDIR)/, $(SOURCES)) $(addprefix $(SOURCEDIR)/, $(HEADERS))
+	@#
 
+debug: CFLAGS += -g
+debug: LDFLAGS += -g
+debug: all
+
+optimized: CFLAGS += -O3
+optimized: LDFLAGS += -O3
+optimized: all
+
+profiling: CFLAGS += -pg
+profiling: LDFLAGS += -pg
+profiling: all
 
 
 $(BUILDDIR)/$(TARGET): $(addprefix $(BUILDDIR)/, $(OBJECTS))
-	@#echo " [LD]      $@"
 	@/bin/sh $(SCRIPTDIR)/$(PRINTSCRIPT) " [LD]      $@"
 	@$(CC) $(LDFLAGS) $^ -o $@
 
 $(BUILDDIR)/%.o: $(SOURCEDIR)/%.c $(addprefix $(SOURCEDIR)/, $(HEADERS))
-	@#echo " [CC]      $@"
 	@/bin/sh $(SCRIPTDIR)/$(PRINTSCRIPT) " [CC]      $@"
 	@$(CC) $(CFLAGS) -c $< -o $@
 
 
 $(SCRIPTDIR)/$(IMGSCRIPT): $(SCRIPTDIR)/$(IMGSCRIPT).c
-	@#echo " [CC]      $@"
 	@/bin/sh $(SCRIPTDIR)/$(PRINTSCRIPT) " [CC]      $@"
 	@$(CC) -g -Wall -Wextra -Wpedantic $^ -o $@
 	
 $(SOURCEDIR)/image_%.c: $(RESDIR)/%.png $(SCRIPTDIR)/$(IMGSCRIPT)
-	@#echo " [GEN]     $@"
 	@/bin/sh $(SCRIPTDIR)/$(PRINTSCRIPT) " [GEN]     $@"
 	@$(SCRIPTDIR)/$(IMGSCRIPT) $< -n $* -c $@
 
 $(SOURCEDIR)/image_%.h: $(SCRIPTDIR)/$(IMGSCRIPT)
-	@#echo " [GEN]     $@"
 	@/bin/sh $(SCRIPTDIR)/$(PRINTSCRIPT) " [GEN]     $@"
 	@$(SCRIPTDIR)/$(IMGSCRIPT) -n $* -h $@
 

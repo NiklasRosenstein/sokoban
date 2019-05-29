@@ -10,13 +10,14 @@ const char b64chars[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz012
 
 int main(int argc, char *argv[]);
 void help(char *name);
-bool filename_to_hguard(const char *fname, char **hguard);
+void filepath_to_filename(char *str);
+void filename_to_hguard(char *str);
 bool read_file(const char *fname, unsigned char **buffer, long *size);
 bool write_file(const char *fname, char *content);
 size_t b64_encoded_size(size_t binary_size);
 char *b64_encode(const unsigned char *in, const size_t len);
-bool generate_h(char **out, char *hguard, char *variable);
-bool generate_c(char **out, char *b64, char *variable);
+bool generate_h(char *variable, char *out_file);
+bool generate_c(char *b64, char *variable, char *out_file);
 
 int main(int argc, char *argv[]) {
     // Read parameters
@@ -78,31 +79,30 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
+    // Check if .h file name is valid (must end with .h)
+    if (hfile != NULL) {
+        char ext = hfile[strlen(hfile) - 1];
+        if (ext != 'h') {
+            fprintf(stderr, "Given .h file '%s' must end with .h file extension\n", hfile);
+            return 1;
+        }
+    }
+
+    // Check if .c file name is valid (must end with .c)
+    if (cfile != NULL) {
+        char ext = cfile[strlen(cfile) - 1];
+        if (ext != 'c') {
+            fprintf(stderr, "Given .c file '%s' must end with .c file extension\n", cfile);
+            return 1;
+        }
+    }
+
     // Generate .h file
     if (hfile != NULL) {
-        // Generate header guard
-        char *hguard = NULL;
-        if (!filename_to_hguard(hfile, &hguard)) {
-            printf("Could not generate header guard\n");
-            return 1;
-        }
-
-        // Generate .h content
-        char *fcontent = NULL;
-        if (!generate_h(&fcontent, hguard, variable)) {
+        if (!generate_h(variable, hfile)) {
             printf("Could not generate .h file content\n");
-            free(hguard);
             return 1;
         }
-        free(hguard);
-
-        // Write to .h file
-        if (!write_file(hfile, fcontent)) {
-            printf("Could not write .h file '%s'\n", hfile);
-            free(fcontent);
-            return 1;
-        }
-        free(fcontent);
     }
 
     // Generate .c file
@@ -111,7 +111,6 @@ int main(int argc, char *argv[]) {
         unsigned char *binary = NULL;
         long binary_size = 0;
         if (!read_file(in_file, &binary, &binary_size)) {
-            // free(binary); //TODO ?
             return 1;
         }
 
@@ -119,22 +118,13 @@ int main(int argc, char *argv[]) {
         char *b64_buffer = b64_encode(binary, binary_size);
         free(binary);
 
-        // Generate .c content
-        char *file_content = NULL;
-        if (!generate_c(&file_content, b64_buffer, variable)) {
+        // Generate .c file
+        if (!generate_c(b64_buffer, variable, cfile)) {
             printf("Could not generate .c file content\n");
             free(b64_buffer);
             return 1;
         }
         free(b64_buffer);
-
-        // Write content to .c file
-        if (!write_file(cfile, file_content)) {
-            printf("Could not write .c file '%s'\n", cfile);
-            free(file_content);
-            return 1;
-        }
-        free(file_content);
     }
 
 
@@ -148,67 +138,74 @@ void help(char *name) {
     printf("This script takes an input...\n");
 }
 
-bool filename_to_hguard(const char *fname, char **hguard) {
-    size_t flen = strlen(fname);
-    size_t hlen = flen;
+void filepath_to_filename(char *str) {
+    int len = strlen(str) + 1;
 
-    // Allocate header guard
-    *hguard = malloc(flen + 1);
-    if (!*hguard) {
-        printf("Could not allocate memory for header guard\n");
-        return false;
+    // Find start index of filename
+    int start = 0;
+    for (int i = 0; i < len; i++) {
+        if (str[i] == '/' || str[i] == '\\') {
+            start = i + 1;
+        }
     }
-    (*hguard)[flen] = '\0';
+
+    // Remove characters before '/'
+    if (start == 0) {
+        return;
+    }
+    else {
+        int i;
+        int j;
+        for (i = 0, j = start; j < len; i++, j++) {
+            str[i] = str[j];
+        }
+    }
+
+    return;
+}
+
+void filename_to_hguard(char *str) {
+    size_t len = strlen(str);
 
     size_t i;
     size_t j;
-    for (i = 0, j = 0; i < flen; i++, j++) {
-        char c = fname[i];
+    for (i = 0, j = 0; i < len; i++, j++) {
+        char c = str[i];
 
         // .h becomes _H
         if (c == '.') {
-            (*hguard)[j] = '_';
+            str[j] = '_';
             continue;
         }
 
         // Directory separator will be '_'
         if (c == '/' || c == '\\') {
-            (*hguard)[j] = '_';
+            str[j] = '_';
             continue;
         }
 
         // '_' is allowed
         if (c == '_') {
-            (*hguard)[j] = c;
+            str[j] = c;
             continue;
         }
 
         // A-Z characters are allowed
         if (c > 0x40 && c < 0x5B) {
-            (*hguard)[j] = c;
-            continue;
-        }
-        
-        // a-z characters are converted to uppercase A-Z
-        if (c > 0x60 && c < 0x7B) {
-            (*hguard)[j] = c - 0x20;
+            str[j] = c;
             continue;
         }
 
+        // a-z characters are converted to uppercase A-Z
+        if (c > 0x60 && c < 0x7B) {
+            str[j] = c - 0x20;
+            continue;
+        }
 
         // Skip all other characters
         j--;
-        hlen--;
         continue;
     }
-
-    // Resize buffer if characters have been skipped
-    if (hlen != flen) {
-        (*hguard) = realloc(*hguard, hlen + 1);
-        (*hguard)[hlen] = '\0';
-    }
-
-    return true;
 }
 
 bool read_file(const char *fname, unsigned char **buffer, long *size) {
@@ -242,8 +239,6 @@ bool write_file(const char *fname, char *content) {
         return false;
     }
 
-    //printf("Attempting to write to '%s' the following content:\n", fname);
-    //printf("%s\n", string);
     fputs(content, f);
 
     fclose(f);
@@ -271,85 +266,127 @@ bool append_string(char **buf, int* buf_len, const char* str) {
     return true;
 }
 
-bool generate_h(char **out, char *hguard, char *variable) {
+bool generate_h(char *variable, char *out_file) {
     // Create string to append content to
     int out_len = 20;
-    *out = malloc(out_len * sizeof(char));
-    if (*out == NULL) {
+    char *out = malloc(out_len * sizeof(char));
+    if (out == NULL) {
         printf("Could not allocate memory\n");
-        free(*out);
+        free(out);
         return false;
     }
-    *out[0] = '\0';
+    out[0] = '\0';
 
-
-    // Add header guard
-    append_string(out, &out_len, "\n#ifndef ");
-    append_string(out, &out_len, hguard);
-    append_string(out, &out_len, "\n#define ");
-    append_string(out, &out_len, hguard);
-    append_string(out, &out_len, "\n");
 
     // Add warning
-    append_string(out, &out_len, "\n// This file is generated automatically"
+    append_string(&out, &out_len, "\n// This file is generated automatically"
                                  " - all changes will be overwritten!\n");
 
-    // Add variable declaration
-    append_string(out, &out_len, "\nunsigned long b64image_");
-    append_string(out, &out_len, variable);
-    append_string(out, &out_len, "_length;\n");
+    // Add header guard
+    {
+        char *hguard = malloc(strlen(out_file) + 1);
+        strcpy(hguard, out_file);
 
-  //append_string(out, &out_len, "\nconst char *b64image_");
-    append_string(out, &out_len, "\nchar *b64image_");
-    append_string(out, &out_len, variable);
-    append_string(out, &out_len, ";\n");
+        // Convert file path to basename
+        filepath_to_filename(hguard);
+
+        // Generate header guard
+        filename_to_hguard(hguard);
+
+        append_string(&out, &out_len, "\n#ifndef ");
+        append_string(&out, &out_len, hguard);
+        append_string(&out, &out_len, "\n#define ");
+        append_string(&out, &out_len, hguard);
+        append_string(&out, &out_len, "\n");
+
+        free(hguard);
+    }
+
+    // Include headers
+    append_string(&out, &out_len, "\n");
+    append_string(&out, &out_len, "#include <stdlib.h>\n\n");
+
+    // Add variable declaration
+    append_string(&out, &out_len, "\nsize_t b64image_");
+    append_string(&out, &out_len, variable);
+    append_string(&out, &out_len, "_length;\n");
+
+    append_string(&out, &out_len, "\nchar *b64image_");
+    append_string(&out, &out_len, variable);
+    append_string(&out, &out_len, ";\n");
 
     // End header guard
-    append_string(out, &out_len, "\n#endif\n");
+    append_string(&out, &out_len, "\n#endif\n");
+
 
     // Resize buffer length to minimum required
-    out_len = strlen(*out) + 1;
-    *out = realloc(*out, out_len);
-    if (*out == NULL) {
+    out_len = strlen(out) + 1;
+    out = realloc(out, out_len);
+    if (out == NULL) {
         printf("Could not allocate memory\n");
-        free(*out);
+        free(out);
         return false;
     }
-    (*out)[out_len - 1] = '\0';
+    out[out_len - 1] = '\0';
 
+
+    // Write to .h file
+    if (!write_file(out_file, out)) {
+        printf("Could not write .h file '%s'\n", out_file);
+        free(out);
+        return false;
+    }
+
+    free(out);
     return true;
 }
 
-bool generate_c(char **out, char *b64, char *variable) {
+bool generate_c(char *b64, char *variable, char *out_file) {
     // Create string to append content to
     int out_len = 20;
-    *out = malloc(out_len * sizeof(char));
-    if (*out == NULL) {
+    char *out = malloc(out_len * sizeof(char));
+    if (out == NULL) {
         printf("Could not allocate memory\n");
-        free(*out);
+        free(out);
         return false;
     }
-    *out[0] = '\0';
+    out[0] = '\0';
 
     // Add warning
-    append_string(out, &out_len, "\n// This file is generated automatically"
+    append_string(&out, &out_len, "\n// This file is generated automatically"
                                  " - all changes will be overwritten!\n");
 
-    // Add variable definition
-    append_string(out, &out_len, "\nunsigned long b64image_");
-    append_string(out, &out_len, variable);
-    append_string(out, &out_len, "_length = 0;\n");
+    // Include header
+    append_string(&out, &out_len, "\n");
+    append_string(&out, &out_len, "#include \"");
+    {
+        // Create .h file name from .c file name
+        char *header = malloc(strlen(out_file) + 1);
+        strcpy(header, out_file);
+        header[strlen(out_file) - 1] = 'h';
 
-  //append_string(out, &out_len, "\nconst char *b64image_");
-    append_string(out, &out_len, "\nchar *b64image_");
-    append_string(out, &out_len, variable);
-    append_string(out, &out_len, " = \n");
+        // Get basename of path
+        filepath_to_filename(header);
+
+        append_string(&out, &out_len, header);
+        free(header);
+    }
+    append_string(&out, &out_len, "\"\n\n");
+
+    // Add variable definition
+    append_string(&out, &out_len, "\nsize_t b64image_");
+    append_string(&out, &out_len, variable);
+    append_string(&out, &out_len, "_length = 0;\n");
+
+    append_string(&out, &out_len, "\nchar *b64image_");
+    append_string(&out, &out_len, variable);
+    append_string(&out, &out_len, " = \n");
 
     // Add Base64 string char by char
     const int CHARS_PER_LINE = 60;
     size_t len = strlen(b64);
     for (size_t i = 0; i < len; i++) {
-        append_string(out, &out_len, "        \"");
+        append_string(&out, &out_len, "        \"");
         for (int k = 0; k < CHARS_PER_LINE; k++) {
             if (i + k < len) {
                 //append_string(out, &out_len, &b64[i + k]);
@@ -357,7 +394,7 @@ bool generate_c(char **out, char *b64, char *variable) {
                 char *foo = malloc(2);
                 foo[0] = b64[i + k];
                 foo[1] = '\0';
-                append_string(out, &out_len, foo);
+                append_string(&out, &out_len, foo);
                 free(foo);
             } else {
                 break;
@@ -365,21 +402,30 @@ bool generate_c(char **out, char *b64, char *variable) {
         }
         i += CHARS_PER_LINE - 1;
 
-        append_string(out, &out_len, "\"\n");
+        append_string(&out, &out_len, "\"\n");
     }
-    append_string(out, &out_len, "        ;\n\n");
+    append_string(&out, &out_len, "        ;\n\n");
 
 
     // Resize buffer length to minimum required
-    out_len = strlen(*out) + 1;
-    *out = realloc(*out, out_len);
-    if (*out == NULL) {
+    out_len = strlen(out) + 1;
+    out = realloc(out, out_len);
+    if (out == NULL) {
         printf("Could not allocate memory\n");
-        free(*out);
+        free(out);
         return false;
     }
-    (*out)[out_len - 1] = '\0';
+    out[out_len - 1] = '\0';
 
+
+    // Write generated content to file
+    if (!write_file(out_file, out)) {
+        fprintf(stderr, "Could not write .c file '%s'\n", out_file);
+        free(out);
+        return false;
+    }
+
+    free(out);
     return true;
 }
 
@@ -390,7 +436,7 @@ char *b64_encode(const unsigned char *in, const size_t len) {
         exit(1);
         return NULL;
     }
-    
+
     size_t encoded_length = b64_encoded_size(len);
 
     char *out = malloc(encoded_length + 1);
@@ -409,7 +455,7 @@ char *b64_encode(const unsigned char *in, const size_t len) {
         out[j + 2] = (i + 1 < len) ? b64chars[(v >>  6) & 0x3F] : '=';
         out[j + 3] = (i + 2 < len) ? b64chars[ v        & 0x3F] : '=';
     }
-    
+
     return out;
 }
 
@@ -418,13 +464,13 @@ size_t b64_encoded_size(size_t binary_size) {
 
     // Binary size needs to be divisable by 3
     if (binary_size % 3 != 0) {
-    	size += 3 - (binary_size % 3);
+        size += 3 - (binary_size % 3);
     }
 
     // 3 binary Byte are represented by 4 Base64 chars
     size /= 3;
     size *= 4;
-    
+
     return size;
 }
 

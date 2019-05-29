@@ -9,6 +9,7 @@
 #include <stdint.h>
 
 #include <SDL.h>
+#include <SDL_image.h>
 
 #include "image_box.h"
 #include "image_boxtarget.h"
@@ -29,5 +30,9 @@ void deinitialize_images();
 bool initialize_images();
 
 bool b64_decode(char **out, size_t *out_len, const char* b64);
+
+bool loadIMG_from_file(SDL_Surface **image, const char *filename);
+
+bool loadIMG_from_buffer(SDL_Surface **image, const char *buffer, const int length);
 
 #endif
