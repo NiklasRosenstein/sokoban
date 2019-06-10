@@ -1,11 +1,17 @@
 
-#include "image.h"
+#include "Images.h"
 
 static size_t b64_decoded_size(const char *b64);
 static inline bool b64_is_valid_char(char c);
 
+/**
+ * @brief Number of different images in this game.
+ */
 static int IMAGES_COUNT = 6;
 
+/**
+ * @brief Array of pointers of SDL_Surfaces of images
+ */
 static SDL_Surface **IMAGES_SDL[] = {
     &IMG_BOX,
     &IMG_BOXTARGET,
@@ -15,6 +21,9 @@ static SDL_Surface **IMAGES_SDL[] = {
     &IMG_WALL
 };
 
+/**
+ * @brief Array of pointers to b64 encoded images
+ */
 static char **IMAGES[] = {
     &b64image_box,
     &b64image_boxtarget,
@@ -24,52 +33,20 @@ static char **IMAGES[] = {
     &b64image_wall
 };
 
-static size_t *IMAGES_LENGTH[] = {
-    &b64image_box_length,
-    &b64image_boxtarget_length,
-    &b64image_free_length,
-    &b64image_player_length,
-    &b64image_target_length,
-    &b64image_wall_length
-};
-
-void deinitialize_images() {
-    for (int i = 0; i < IMAGES_COUNT; i++) {
-        free(*(IMAGES[i]));
-
-        *(IMAGES_LENGTH[i]) = 0;
-    }
-}
-
-bool initialize_images() {
-    for (int i = 0; i < IMAGES_COUNT; i++) {
-        // Skip already initialized images
-        if (*(IMAGES_LENGTH[i]) != 0) {
-            fprintf(stderr, "Skip decoding of image - image is already decoded\n");
-            continue;
-        }
-
-        // Decode image from Base64
-        char *bin;
-        size_t len;
-        if (!b64_decode(&bin, &len, *(IMAGES[i]))) {
-            fprintf(stderr, "Error when decoding images\n");
-            return false;
-        }
-
-        *(IMAGES[i]) = bin;
-        *(IMAGES_LENGTH[i]) = len;
-
-
-        // Create SDL Surface from binary
-        loadIMG_from_buffer((IMAGES_SDL[i]), *(IMAGES[i]), *(IMAGES_LENGTH[i]));
-    }
-
-    return true;
-}
-
-bool b64_decode(char **out, size_t *out_len, const char* b64) {
-    //TODO: Create this on the fly
+/**
+ * @brief Decodes a Base64 encoded image to raw binary bytes.
+ *
+ * @param out Pointer to a location where output data will be stored.
+ *        This function will malloc the required size. This will need
+ *        to be freed eventually.
+ * @param out_len Pointer to a location where the length of the output
+ *        data will be stored.
+ * @param b64 The Base64 encoded input image for this function.
+ *
+ * @return True if decoding was successful, false otherwise.
+ */
+static bool b64_decode(char **out, size_t *out_len, const char* b64) {
+    //TODO: Create this table on the fly
     int b64invs[800] = { 62, -1, -1, -1, 63, 52, 53, 54, 55, 56, 57, 58,
                     59, 60, 61, -1, -1, -1, -1, -1, -1, -1,  0,  1,
                      2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13,
@@ -150,6 +127,9 @@ bool b64_decode(char **out, size_t *out_len, const char* b64) {
 }
 
 // TODO: Remove this function
+/**
+ * \todo Remove this function
+ */
 static inline bool b64_is_valid_char(char c) {
     if (c >= '0' && c <= '9')
         return true;
@@ -188,7 +168,33 @@ static size_t b64_decoded_size(const char *b64) {
     return bin_len;
 }
 
-bool loadIMG_from_file(SDL_Surface **image, const char *filename) {
+/**
+ * @brief Creates an SDL_Surface from raw binary data.
+ *
+ * @param image The memory location where the SDL_Surface will be created.
+ * @param buffer The raw binary image data from which the SDL_Surface will
+ *        be created.
+ * @param length The length of the raw binary data.
+ */
+static bool loadIMG_from_buffer(SDL_Surface **image, const char *buffer, const int length) {
+    // Create SDL_RWops from buffer (this does not copy memory!)
+    SDL_RWops *rw = SDL_RWFromConstMem(buffer, length);
+
+    // Copy buffer into SDL_Surface and free SDL_RWops
+    SDL_Surface *temp = IMG_Load_RW(rw, 0);
+    SDL_RWclose(rw);
+    if (temp == NULL) {
+        fprintf(stderr, "Could not load image from buffer\n");
+        fprintf(stderr, "IMG_Load_RW: '%s'\n", IMG_GetError());
+        return false;
+    }
+
+    *image = temp;
+
+    return true;
+}
+
+/**static bool loadIMG_from_file(SDL_Surface **image, const char *filename) {
     // Cut off the file ending (last 3 characters)
     const char *ending = "";
     if (strlen(filename) > 3) {
@@ -208,22 +214,56 @@ bool loadIMG_from_file(SDL_Surface **image, const char *filename) {
     }
 
     return true;
+}**/
+
+/**
+ * @brief Deinitialize all images
+ */
+void deinitialize_images() {
+    // Free SDL_Surface images
+    for (int i = 0; i < IMAGES_COUNT; i++) {
+        SDL_FreeSurface(*(IMAGES_SDL[i]));
+    }
 }
 
-bool loadIMG_from_buffer(SDL_Surface **image, const char *buffer, const int length) {
-    // Create SDL_RWops from buffer (this does not copy memory!)
-    SDL_RWops *rw = SDL_RWFromConstMem(buffer, length);
+/**
+ * @brief Initialize all images
+ *
+ * Decodes all Base64 encoded images and creates SDL_Sufaces of them.
+ */
+bool initialize_images() {
+    // Decode al Base64 encoded images, save decoded
+    // output and create SDL_Surface from image.
+    for (int i = 0; i < IMAGES_COUNT; i++) {
+        // Decode image from Base64
+        char *bin;
+        size_t len;
+        if (!b64_decode(&bin, &len, *(IMAGES[i]))) {
+            fprintf(stderr, "Error when decoding images\n");
+            return false;
+        }
 
-    // Copy buffer into SDL_Surface and free SDL_RWops
-    SDL_Surface *temp = IMG_Load_RW(rw, 0);
-    //SDL_RWclose(rw);
-    if (temp == NULL) {
-        fprintf(stderr, "Could not load image from buffer\n");
-        fprintf(stderr, "IMG_Load_RW: '%s'\n", IMG_GetError());
-        return false;
+        // Create SDL Surface from binary and free original binary
+        SDL_Surface *surf;
+        if (!loadIMG_from_buffer(&surf, bin, len)) {
+            fprintf(stderr, "Could not create SDL_Surface from image\n");
+            free(bin);
+            return false;
+        }
+        free(bin);
+
+        // Create optimized SDL_Surface from loaded surface and free original
+        SDL_Surface *opt = SDL_ConvertSurface(surf, WINSURFACE->format, 0);
+        SDL_FreeSurface(surf);
+        if (opt == NULL) {
+            fprintf(stderr, "Could not optimize loaded SDL_Surface\n"
+                    "SDL_Error: '%s'\n", SDL_GetError());
+            return false;
+        }
+
+        // Save reference to SDL_Surface
+        *(IMAGES_SDL[i]) = opt;
     }
-
-    *image = temp;
 
     return true;
 }

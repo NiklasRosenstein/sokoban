@@ -1,6 +1,6 @@
 CC         :=  clang
 
-FLAGS      :=  -std=c99 -g
+FLAGS      :=  -std=c99
 FLAGS      +=  -Wall -Wextra -Wpedantic
 FLAGS      +=  -Wno-overlength-strings
 
@@ -8,6 +8,9 @@ SOURCEDIR  :=  src
 BUILDDIR   :=  build
 SCRIPTDIR  :=  scripts
 RESDIR     :=  resources
+DOCDIR     :=  doc/doc
+
+DOCCONFIG  :=  doc/Doxygen.config
 
 LIBRARIES  :=  sdl2
 LIBRARIES  +=  SDL2_image
@@ -29,8 +32,8 @@ IMAGES     +=  player.png
 IMAGES     +=  target.png
 IMAGES     +=  wall.png
 
-GENSOURCES := $(addprefix image_, $(IMAGES:.png=.c))
-GENHEADERS := $(addprefix image_, $(IMAGES:.png=.h))
+GENSOURCES := $(addprefix Image_, $(IMAGES:.png=.c))
+GENHEADERS := $(addprefix Image_, $(IMAGES:.png=.h))
 
 SOURCES    :=  $(notdir $(wildcard $(SOURCEDIR)/*.c))
 SOURCES    +=  $(GENSOURCES)
@@ -45,7 +48,7 @@ TAGS+      :=  $(subst $(SOURCEDIR),$(BUILDDIR), $(HEADERS:.h=.tags))
 TAGFILE    :=  tags
 
 
-.PHONY: all clean debug optimized
+.PHONY: all clean doc debug optimized
 
 all: $(BUILDDIR)/$(TARGET) $(addprefix $(SOURCEDIR)/, $(SOURCES)) $(addprefix $(SOURCEDIR)/, $(HEADERS))
 	@#
@@ -62,6 +65,8 @@ profiling: CFLAGS += -pg
 profiling: LDFLAGS += -pg
 profiling: all
 
+doc:
+	doxygen $(DOCCONFIG)
 
 $(BUILDDIR)/$(TARGET): $(addprefix $(BUILDDIR)/, $(OBJECTS))
 	@/bin/sh $(SCRIPTDIR)/$(PRINTSCRIPT) " [LD]      $@"
@@ -76,11 +81,11 @@ $(SCRIPTDIR)/$(IMGSCRIPT): $(SCRIPTDIR)/$(IMGSCRIPT).c
 	@/bin/sh $(SCRIPTDIR)/$(PRINTSCRIPT) " [CC]      $@"
 	@$(CC) -g -Wall -Wextra -Wpedantic $^ -o $@
 	
-$(SOURCEDIR)/image_%.c: $(RESDIR)/%.png $(SCRIPTDIR)/$(IMGSCRIPT)
+$(SOURCEDIR)/Image_%.c: $(RESDIR)/%.png $(SCRIPTDIR)/$(IMGSCRIPT)
 	@/bin/sh $(SCRIPTDIR)/$(PRINTSCRIPT) " [GEN]     $@"
 	@$(SCRIPTDIR)/$(IMGSCRIPT) $< -n $* -c $@
 
-$(SOURCEDIR)/image_%.h: $(SCRIPTDIR)/$(IMGSCRIPT)
+$(SOURCEDIR)/Image_%.h: $(SCRIPTDIR)/$(IMGSCRIPT)
 	@/bin/sh $(SCRIPTDIR)/$(PRINTSCRIPT) " [GEN]     $@"
 	@$(SCRIPTDIR)/$(IMGSCRIPT) -n $* -h $@
 

@@ -132,7 +132,7 @@ int main(int argc, char *argv[]) {
 }
 
 void help(char *name) {
-    // TODO
+    // TODO: Print help
     printf("Usage: %s <input> -o <output>\n", name);
     printf("\n");
     printf("This script takes an input...\n");
@@ -307,11 +307,11 @@ bool generate_h(char *variable, char *out_file) {
     append_string(&out, &out_len, "#include <stdlib.h>\n\n");
 
     // Add variable declaration
-    append_string(&out, &out_len, "\nsize_t b64image_");
+    append_string(&out, &out_len, "\nextern size_t b64image_");
     append_string(&out, &out_len, variable);
     append_string(&out, &out_len, "_length;\n");
 
-    append_string(&out, &out_len, "\nchar *b64image_");
+    append_string(&out, &out_len, "\nextern char *b64image_");
     append_string(&out, &out_len, variable);
     append_string(&out, &out_len, ";\n");
 
@@ -389,13 +389,9 @@ bool generate_c(char *b64, char *variable, char *out_file) {
         append_string(&out, &out_len, "        \"");
         for (int k = 0; k < CHARS_PER_LINE; k++) {
             if (i + k < len) {
-                //append_string(out, &out_len, &b64[i + k]);
-                //TODO: Fixme
-                char *foo = malloc(2);
-                foo[0] = b64[i + k];
-                foo[1] = '\0';
+                //TODO: Add more chars at once
+                char foo[] = { b64[i + k], '\0' };
                 append_string(&out, &out_len, foo);
-                free(foo);
             } else {
                 break;
             }

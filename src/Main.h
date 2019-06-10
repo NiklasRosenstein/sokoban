@@ -8,9 +8,9 @@
 #include <SDL.h>
 #include <SDL_image.h>
 
-#include "image.h"
-#include "board.h"
-#include "soko.h"
+#include "Images.h"
+#include "Board.h"
+#include "Soko.h"
 
 
 bool initialize();
@@ -19,7 +19,7 @@ void deinitialize();
 
 void do_command(SDL_Keycode key);
 
-int main(int argc, char* argv[]);
+int main();
 
 
 #endif
