@@ -19,12 +19,14 @@
 #include "Image_wall.h"
 #include "Levels.h"
 
-SDL_Surface *IMG_BOX;
-SDL_Surface *IMG_BOXTARGET;
-SDL_Surface *IMG_FREE;
-SDL_Surface *IMG_PLAYER;
-SDL_Surface *IMG_TARGET;
-SDL_Surface *IMG_WALL;
+extern uint8_t GRID_SIZE;
+
+SDL_Texture *IMG_BOX;
+SDL_Texture *IMG_BOXTARGET;
+SDL_Texture *IMG_FREE;
+SDL_Texture *IMG_PLAYER;
+SDL_Texture *IMG_TARGET;
+SDL_Texture *IMG_WALL;
 
 void deinitialize_images();
 

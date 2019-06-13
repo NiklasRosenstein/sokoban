@@ -5,21 +5,9 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
-#include <SDL.h>
-#include <SDL_image.h>
-
-#include "Images.h"
 #include "Board.h"
-#include "Soko.h"
-
-
-bool initialize();
-
-void deinitialize();
-
-void do_command(SDL_Keycode key);
+#include "Game.h"
 
 int main();
-
 
 #endif

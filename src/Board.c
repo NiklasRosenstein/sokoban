@@ -1,49 +1,16 @@
 
 #include "Board.h"
 
-//char BOARD[] = "WWWWWWWWWW"
-//               "WFFFFFFFFW"
-//               "WFFWWWWFFW"
-//               "WFFWTFFFFW"
-//               "WFBWFFFFFW"
-//               "WFFWFBFFFW"
-//               "WFFWWTWFFW"
-//               "WFFFFFWFFW"
-//               "WFFFFFFFFW"
-//               "WWWWWWWWWW";
-
-//char BOARD[] = "##########"
-//               "#        #"
-//               "#  ####  #"
-//               "#  #.    #"
-//               "# B#     #"
-//               "#  # B   #"
-//               "#  ##.#  #"
-//               "#     #  #"
-//               "#        #"
-//               "##########";
-
 char *BOARD = NULL;
 
-uint8_t BOARD_HEIGHT = 10;
-uint8_t BOARD_WIDTH = 10;
+uint8_t BOARD_WIDTH;
+uint8_t BOARD_HEIGHT;
 
-const char BOARD_FREE = ' ';
-const char BOARD_BOX = 'B';
-const char BOARD_TARGET = '.';
+const char BOARD_FREE      = ' ';
+const char BOARD_BOX       = '$';
+const char BOARD_TARGET    = '.';
 const char BOARD_BOXTARGET = '*';
-const char BOARD_WALL = '#';
-
-/**
- * @brief SDL_Surface of the main window.
- */
-SDL_Surface *WINSURFACE;
-
-/**
- * @brief The main window.
- */
-SDL_Window *WINDOW;
-
+const char BOARD_WALL      = '#';
 
 /**
  * @brief Calculates how many targets are still left.
@@ -85,79 +52,41 @@ char board_get(int x, int y) {
  */
 void board_set(int x, int y, char b) {
     BOARD[y * BOARD_WIDTH + x] = b;
-    show_field(x, y);
 }
 
-/**
- * @brief Takes coordinates array and draws its fields.
- *
- * Takes an array of (x, y) coordinates and draws all fields at the given
- * coordinates.
- *
- * @param xy Array of (x, y) coordinates whose fields will be drawn.
- * @param length Length of the given array.
- */
-void show_fields(const int xy[][2], const int length) {
-    for (int i = 0; i < length; i++) {
-        int x = xy[i][0];
-        int y = xy[i][1];
-
-        // Get correct field
-        char field = board_get(x, y);
-
-        // Select correct image to draw
-        SDL_Surface *img;
-        if (field == BOARD_BOX) {
-            img = IMG_BOX;
-        } else if (field == BOARD_BOXTARGET) {
-            img = IMG_BOXTARGET;
-        } else if (field == BOARD_FREE) {
-            img = IMG_FREE;
-        } else if (field == BOARD_TARGET) {
-            img = IMG_TARGET;
-        } else if (field == BOARD_WALL) {
-            img = IMG_WALL;
-        } else {
-            fprintf(stderr, "Found unknown character in board encoding"
-                    "'%c' (assuming as wall)\n", field);
-            img = IMG_WALL;
-        }
-
-        // Draw
-        SDL_Rect dst;
-        dst.x = x * 32;
-        dst.y = y * 32;
-        dst.w = 0;          // Not used
-        dst.h = 0;          // Not used
-        SDL_BlitSurface(img, NULL, WINSURFACE, &dst);
+static inline bool show_field(const char field, int x, int y) {
+    // Decide which image(s) to draw
+    if (field == BOARD_BOX) {
+        show_field(BOARD_FREE, x, y);
+        return render_static(IMG_BOX, x, y);
+    } else if (field == BOARD_BOXTARGET) {
+        show_field(BOARD_TARGET, x, y);
+        //return render_static(IMG_BOXTARGET, x, y);
+        return render_animated(IMG_BOXTARGET, x, y, 200, 5, true);
+    } else if (field == BOARD_FREE) {
+        return render_permutated(IMG_FREE, x, y);
+    } else if (field == BOARD_TARGET) {
+        show_field(BOARD_FREE, x, y);
+        return render_animated(IMG_TARGET, x, y, 200, 5, false);
+    } else if (field == BOARD_WALL) {
+        return render_with_variation(IMG_WALL, x, y, 6, 2);
+    } else {
+        fprintf(stderr, "Found unknown character in board encoding"
+                "'%c' (assuming as wall)\n", field);
+        return show_field(BOARD_WALL, x, y);
     }
-
-    // Update the surface after all bitmaps have been drawn
-    SDL_UpdateWindowSurface(WINDOW);
-}
-
-/**
- * @brief Draws the field at position (x,y)
- */
-void show_field(const int x, const int y) {
-    const int xy[1][2] = {{x, y}};
-    show_fields(xy, 1);
 }
 
 /**
  * @brief Draws the complete gameboard.
  */
 void show_board() {
-    int size = BOARD_HEIGHT * BOARD_WIDTH;
-
-    // Create array of coordinates
-    int xy[size][2];
-    for (int i = 0; i< size; i++) {
-        xy[i][0] = i % BOARD_WIDTH; // x
-        xy[i][1] = i / BOARD_WIDTH; // y
+    for (int y = 0; y < BOARD_HEIGHT; y++) {
+        for (int x = 0; x < BOARD_WIDTH; x++) {
+            char field = board_get(x, y);
+            show_field(field, x, y);
+        }
     }
-
-    show_fields(xy, size);
 }
 
 void deinitialize_board() {

@@ -160,6 +160,9 @@ static bool parse_level(const char *raw, long len) {
     SOKO_X = soko_x;
     SOKO_Y = soko_y;
 
+    // After loading level reinitialize the scaler
+    initialize_scaler();
+
     return true;
 }
 
@@ -245,6 +248,5 @@ bool load_level_from_buffer(const char *buf, long len) {
     bool ret = parse_level(buf2, len2);
     free(buf2);
     return ret;
-
 }
 

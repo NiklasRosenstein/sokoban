@@ -2,16 +2,6 @@
 #include "Soko.h"
 
 /**
- * @brief Current x position of Sokoban
- */
-uint8_t SOKO_X = 1;
-
-/**
- * @brief Current y position of Sokoban
- */
-uint8_t SOKO_Y = 1;
-
-/**
  * @brief Types for moves of Sokoban
  */
 enum SokoMoveType {
@@ -30,6 +20,22 @@ enum SokoMoveType {
      */
     MOVE_TYPE_WITHBOX
 };
+
+/**
+ * @brief Direction Sokoban is currently facing
+ */
+static enum Direction SOKO_FACING = FACING_LEFT;
+
+/**
+ * @brief Current x position of Sokoban
+ */
+uint8_t SOKO_X;
+
+/**
+ * @brief Current y position of Sokoban
+ */
+uint8_t SOKO_Y;
+
 
 /**
  * @brief Checks if and how Sokoban can move in a given direction.
@@ -115,9 +121,23 @@ static void move_box(int dx, int dy) {
  * @param dy The value to Sokoban in y direction
  */
 void move_soko(int dx, int dy) {
+    // Save direction Sokoban is facing
+    if (dx > 0) {
+        SOKO_FACING = FACING_RIGHT;
+    } else if (dx < 0) {
+        SOKO_FACING = FACING_LEFT;
+    } else if (dy > 0) {
+        // Dont modify when moving down
+        SOKO_FACING = FACING_DOWN;
+    } else if (dy < 0) {
+        // Dont modify when moving up
+        SOKO_FACING = FACING_UP;
+    }
+
     // Check which type of move to do
     enum SokoMoveType type = check_move(dx, dy);
 
+    // Check if move is possible at all
     if (type == MOVE_TYPE_IMPOSSIBLE) {
         return;
     }
@@ -127,13 +147,9 @@ void move_soko(int dx, int dy) {
         move_box(dx, dy);
     }
 
-    // Clear the old field
-    show_field(SOKO_X, SOKO_Y);
-
-    // Show sokoban on the new field
+    // Set new sokoban coordinates
     SOKO_X += dx;
     SOKO_Y += dy;
-    show_soko();
 }
 
 /**
@@ -141,25 +157,7 @@ void move_soko(int dx, int dy) {
  *
  * Draws Sokoban at the current position onto the screen.
 **/
-void show_soko() {
-    SDL_Rect dst;
-    dst.x = SOKO_X * 32;
-    dst.y = SOKO_Y * 32;
-    dst.h = 0;     // Not used
-    dst.w = 0;     // Not used
-
-    // Draw the entire source image to the correct position
-    // onto the windows surface
-    int ret1 = SDL_BlitSurface(IMG_PLAYER, NULL, WINSURFACE, &dst);
-    if (ret1 != 0) {
-        fprintf(stderr, "Could not blit image to surface! SDL_Error: '%s'\n", SDL_GetError());
-        return;
-    }
-
-    // Update the surface
-    int ret2 = SDL_UpdateWindowSurface(WINDOW);
-    if (ret2 != 0) {
-        fprintf(stderr, "Could not update sdl window surface! SDL_Error: '%s'\n", SDL_GetError());
-    }
+bool show_soko() {
+    return render_with_direction(IMG_PLAYER, SOKO_X, SOKO_Y, SOKO_FACING);
 }
 

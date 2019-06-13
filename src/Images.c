@@ -1,6 +1,8 @@
 
 #include "Images.h"
 
+uint8_t GRID_SIZE = 32;
+
 static size_t b64_decoded_size(const char *b64);
 static inline bool b64_is_valid_char(char c);
 
@@ -12,7 +14,7 @@ static int IMAGES_COUNT = 6;
 /**
  * @brief Array of pointers of SDL_Surfaces of images
  */
-static SDL_Surface **IMAGES_SDL[] = {
+static SDL_Texture **IMAGES_SDL[] = {
     &IMG_BOX,
     &IMG_BOXTARGET,
     &IMG_FREE,
@@ -222,7 +224,7 @@ static bool loadIMG_from_buffer(SDL_Surface **image, const char *buffer, const i
 void deinitialize_images() {
     // Free SDL_Surface images
     for (int i = 0; i < IMAGES_COUNT; i++) {
-        SDL_FreeSurface(*(IMAGES_SDL[i]));
+        SDL_DestroyTexture(*(IMAGES_SDL[i]));
     }
 }
 
@@ -252,17 +254,20 @@ bool initialize_images() {
         }
         free(bin);
 
-        // Create optimized SDL_Surface from loaded surface and free original
-        SDL_Surface *opt = SDL_ConvertSurface(surf, WINSURFACE->format, 0);
-        SDL_FreeSurface(surf);
-        if (opt == NULL) {
-            fprintf(stderr, "Could not optimize loaded SDL_Surface\n"
+        // Create texture from surface and free surface
+        SDL_Texture *text = SDL_CreateTextureFromSurface(WINRENDERER, surf);
+        if (text == NULL) {
+            fprintf(stderr, "Could not create texture from loaded SDL_Surface\n"
                     "SDL_Error: '%s'\n", SDL_GetError());
+            SDL_FreeSurface(surf);
             return false;
         }
+        SDL_FreeSurface(surf);
 
         // Save reference to SDL_Surface
-        *(IMAGES_SDL[i]) = opt;
+        //*(IMAGES_SDL[i]) = opt;
+        // Save reference to texture
+        *(IMAGES_SDL[i]) = text;
     }
 
     return true;
