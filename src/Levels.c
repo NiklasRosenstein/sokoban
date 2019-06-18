@@ -1,19 +1,6 @@
 
 #include "Levels.h"
 
-//const char DEFAULT_LEVEL[] = {
-//    'S','o','k','o','b','a','n','\n',
-//    '#','#','#','#','#','#','#','#','#','#','\n',
-//    '#','@',' ',' ',' ',' ',' ',' ',' ','#','\n',
-//    '#',' ',' ','#','#','#','#',' ',' ','#','\n',
-//    '#',' ',' ','#','.',' ',' ',' ',' ','#','\n',
-//    '#',' ','$','#',' ',' ',' ',' ',' ','#','\n',
-//    '#',' ',' ','#',' ','$',' ',' ',' ','#','\n',
-//    '#',' ',' ','#','#','.','#',' ',' ','#','\n',
-//    '#',' ',' ',' ',' ',' ','#',' ',' ','#','\n',
-//    '#',' ',' ',' ',' ',' ',' ',' ',' ','#','\n',
-//    '#','#','#','#','#','#','#','#','#','#','\n' };
-
 const char *DEFAULT_LEVEL =
     "Sokoban\n"
     "##########\n"
@@ -185,16 +172,19 @@ bool load_level_from_file(const char *filepath) {
                     filepath);
             return false;
         }
+
         fseek(f, 0, SEEK_END);
         len = ftell(f);
         fseek(f, 0, SEEK_SET);
         buf = malloc(len);
+
         if (buf == NULL) {
             fprintf(stderr, "Could not allocate memory for file buffer\n");
             fclose(f);
             free(buf);
             return false;
         }
+
         fread(buf, 1, len, f);
         fclose(f);
     }
@@ -213,7 +203,7 @@ bool load_level_from_file(const char *filepath) {
  * @return True if loading was successful, false otherwise
  */
 bool load_level_from_buffer(const char *buf, long len) {
-    // TODO: Stick to correct Sok format:
+    // TODO: Stick to correct Sok level format:
     // http://www.sokobano.de/wiki/index.php?title=Sok_format
     // http://www.sokobano.de/wiki/index.php?title=Level_format
 

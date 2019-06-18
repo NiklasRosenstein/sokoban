@@ -1,10 +1,14 @@
 
 #include "Menu.h"
 
-bool MENU_SHOWN = true;
+bool MENU_SHOWN = false;
 
 static void draw_text(int x, int y, int w, int h, char *text) {
     // TODO: Implement draw text function
+    if (text == NULL) {
+    }
+    if (x == y || w == h) {
+    }
 }
 
 static void draw_rect_border(int x, int y, int w, int h, int size) {

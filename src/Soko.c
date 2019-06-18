@@ -157,7 +157,7 @@ void move_soko(int dx, int dy) {
  *
  * Draws Sokoban at the current position onto the screen.
 **/
-bool show_soko() {
+bool draw_soko() {
     return render_with_direction(IMG_PLAYER, SOKO_X, SOKO_Y, SOKO_FACING);
 }
 

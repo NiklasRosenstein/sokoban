@@ -78,7 +78,7 @@ int main(int argc, char **argv) {
 
     // Initialize SDL and other basic functionality
     if (initialize() == false) {
-        return false;
+        return 1;
     }
 
     // If a file path was given on the command line load the requested

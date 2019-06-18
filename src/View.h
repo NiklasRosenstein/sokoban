@@ -6,6 +6,7 @@
 #include <SDL.h>
 
 #include "Board.h"
+#include "Game.h"
 #include "Soko.h"
 
 extern SDL_Window   *WINDOW;

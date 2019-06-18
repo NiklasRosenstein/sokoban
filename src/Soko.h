@@ -1,4 +1,3 @@
-
 #ifndef SOKO_H
 #define SOKO_H
 
@@ -9,6 +8,6 @@ extern uint8_t SOKO_Y;
 
 void move_soko(int x, int y);
 
-bool show_soko();
+bool draw_soko();
 
 #endif

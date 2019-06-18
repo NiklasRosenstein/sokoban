@@ -1,6 +1,15 @@
 
 #include "Game.h"
 
+/**
+ * @brief Time that has passed (in milliseconds).
+ *
+ * Time that has passed (in milliseconds) since the start of the game
+ * or the last overflow of this value.
+ *
+ * Should be used for calculating the duration of animations.
+ *
+ */
 uint16_t GAME_TIME = 0;
 
 static const int FPS = 30;
@@ -60,13 +69,15 @@ void game_loop() {
     struct Timer game_timer;
     Timer_start(&game_timer);
 
-    // Loop
-    uint8_t rendered_frames = 0;
-    struct Timer fps_timer;
-    Timer_start(&fps_timer);
-
+    // Frame timer keeps track how much time a single frame took
     struct Timer frame_timer;
 
+    // FPS timer keeps track of current fps
+    //uint8_t rendered_frames = 0;
+    //struct Timer fps_timer;
+    //Timer_start(&fps_timer);
+
+    // Loop
     SDL_Event e;
     while (!quit) {
         Timer_start(&frame_timer);
@@ -104,7 +115,6 @@ void game_loop() {
                         // Check if there are still unfilled targets left
                         if (board_targets_left() == 0) {
                             printf("Game cleared\n");
-                            //Timer_stop(&game_timer);
                             quit = true;
                         }
                         break;
@@ -113,24 +123,23 @@ void game_loop() {
         }
 
         // Calculate fps
-        float fps = 0;
-        {
-            //uint32_t ticks = Timer_get_ticks(&fps_timer);
-            uint16_t ticks = Timer_get_ticks(&fps_timer);
+        //float fps = 0;
+        //{
+        //    uint16_t ticks = Timer_get_ticks(&fps_timer);
 
-            // Dividing by zero is bad
-            if (ticks == 0) {
-                ticks = 1;
-            }
-            fps = rendered_frames / (ticks / 1000.f);
+        //    // Dividing by zero is bad
+        //    if (ticks == 0) {
+        //        ticks = 1;
+        //    }
+        //    fps = rendered_frames / (ticks / 1000.f);
 
-            // Restart fps timer every few seconds
-            if (ticks > 5000) {
-                Timer_stop(&fps_timer);
-                Timer_start(&fps_timer);
-                rendered_frames = 0;
-            }
-        }
+        //    // Restart fps timer every few seconds
+        //    if (ticks > 5000) {
+        //        Timer_stop(&fps_timer);
+        //        Timer_start(&fps_timer);
+        //        rendered_frames = 0;
+        //    }
+        //}
 
         // Wait to get desired fps
         {
@@ -139,9 +148,9 @@ void game_loop() {
             if (desired_frame_time > current_frame_time) {
                 SDL_Delay(desired_frame_time - current_frame_time);
             }
-
         }
 
+        // Update current game time
         GAME_TIME = Timer_get_ticks(&game_timer);
 
         // Refresh the screen

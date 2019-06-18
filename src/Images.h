@@ -2,9 +2,7 @@
 #ifndef IMAGES_H
 #define IMAGES_H
 
-#include <stdlib.h>
 #include <stdio.h>
-#include <string.h>
 #include <stdbool.h>
 #include <stdint.h>
 
@@ -18,8 +16,6 @@
 #include "Image_target.h"
 #include "Image_wall.h"
 #include "Levels.h"
-
-extern uint8_t GRID_SIZE;
 
 SDL_Texture *IMG_BOX;
 SDL_Texture *IMG_BOXTARGET;

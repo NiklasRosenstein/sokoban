@@ -5,8 +5,8 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
-#include "Board.h"
 #include "Game.h"
+#include "Levels.h"
 
 int main();
 

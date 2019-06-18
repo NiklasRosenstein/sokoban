@@ -1,12 +1,11 @@
 
 #include "View.h"
 
-#include <SDL.h>
-#include <SDL_image.h>
-
 //Screen dimension constants
 static unsigned int SCREEN_WIDTH  = 660;
 static unsigned int SCREEN_HEIGHT = 660;
+
+static const uint8_t GRID_SIZE = 32;
 
 static bool WINDOW_MINIMIZED = false;
 
@@ -31,16 +30,20 @@ SDL_Renderer *WINRENDERER;
  * Initialize SDL and create all necessary images.
  */
 bool initialize() {
-    if (WINDOW_MINIMIZED) {
-        //TODO: Test minimized rendering cpu usage
-        printf("Window is minimized ... skipping rendering\n");
-        return true;
-    }
-
     //Initialize SDL
     if (SDL_Init(SDL_INIT_VIDEO) < 0) {
-        fprintf(stderr, "SDL could not initialize! SDL_Error: '%s'\n", SDL_GetError());
+        fprintf(stderr, "SDL could not be initialized! SDL_Error: '%s'\n", SDL_GetError());
         return false;
+    }
+
+    // Initialize SDL_Image (only png part)
+    {
+        int init = IMG_Init(IMG_INIT_PNG);
+        if ((init & IMG_INIT_PNG) != IMG_INIT_PNG) {
+            fprintf(stderr, "Could not initialize SDL_Image with PNG support\n");
+            SDL_Quit();
+            return false;
+        }
     }
 
     // Create window
@@ -54,13 +57,12 @@ bool initialize() {
     if (WINDOW == NULL) {
         fprintf(stderr, "Could not create Window!\n"
                 "SDL_Error: '%s'\n", SDL_GetError());
+        IMG_Quit();
+        SDL_Quit();
         return false;
     }
 
     // Create renderer for window
-    //WINRENDERER = SDL_CreateRenderer(
-    //                WINDOW, -1,
-    //                SDL_RENDERER_ACCELERATED);
     WINRENDERER = SDL_CreateRenderer(
                     WINDOW, -1,
                     SDL_RENDERER_ACCELERATED |
@@ -68,18 +70,21 @@ bool initialize() {
     if (WINRENDERER == NULL) {
         fprintf(stderr, "Could not create renderer for window!\n"
                 "SDL_Error: '%s'\n", SDL_GetError());
+        SDL_DestroyWindow(WINDOW);
+        IMG_Quit();
+        SDL_Quit();
         return false;
     }
 
-    // Set renderer background color
-    if (SDL_SetRenderDrawColor(WINRENDERER, 0x00, 0x00, 0x00, 0xFF) != 0) {
-        fprintf(stderr, "Could not set renderer draw color!\n"
-                "SDL_Error: '%s'\n", SDL_GetError());
-        return false;
-    }
 
     // Initialize and decode images
-    initialize_images();
+    if(!initialize_images()) {
+        SDL_DestroyRenderer(WINRENDERER);
+        SDL_DestroyWindow(WINDOW);
+        IMG_Quit();
+        SDL_Quit();
+        return false;
+    }
 
     return true;
 }
@@ -95,15 +100,14 @@ void initialize_scaler() {
     // Set correct window size
     SDL_GetWindowSize(WINDOW, (int *)&SCREEN_WIDTH, (int *)&SCREEN_HEIGHT);
 
-
     // Calculate scale size
     {
         // Board width and height have both to fit after scaling
-        float scale1 = SCREEN_WIDTH  / (BOARD_WIDTH  * GRID_SIZE);
-        float scale2 = SCREEN_HEIGHT / (BOARD_HEIGHT * GRID_SIZE);
+        float scale1 = SCREEN_WIDTH  / (BOARD_WIDTH  * (float)GRID_SIZE);
+        float scale2 = SCREEN_HEIGHT / (BOARD_HEIGHT * (float)GRID_SIZE);
         SCALE = (scale1 > scale2) ? scale2 : scale1;
 
-        // Only adjust scale in steps of 0.5
+        // Only adjust scale in steps of 0.5 so distortion does not get too bad
         int r = 0;
         while (SCALE >= 0.5) {
             SCALE -= 0.5;
@@ -136,11 +140,12 @@ void deinitialize() {
     SDL_DestroyRenderer(WINRENDERER);
     SDL_DestroyWindow(WINDOW);
 
-    // Quit SDL subsystems
-    SDL_Quit();
-
-    // Clean up dynamicall loaded SDL_Image libraries
+    // Clean up dynamically loaded SDL_Image libraries
+    // Deinitialize SDL_Image
     IMG_Quit();
+
+    // Deinitialize SDL
+    SDL_Quit();
 }
 
 /**
@@ -152,6 +157,11 @@ void deinitialize() {
  * @return True on success. False otherwise.
  */
 bool render() {
+    // Dont render when the window is minimized
+    if (WINDOW_MINIMIZED) {
+        return true;
+    }
+
     // Initialize buffer
     SDL_SetRenderDrawColor(WINRENDERER, 0x00, 0x00, 0x00, 0xFF);
     if (SDL_RenderClear(WINRENDERER) != 0) {
@@ -167,10 +177,10 @@ bool render() {
         // Render game
 
         // Draw the board
-        show_board();
+        draw_board();
 
         // Draw sokoban
-        show_soko();
+        draw_soko();
     }
 
     // Flip buffers

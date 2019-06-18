@@ -6,10 +6,7 @@
 
 #include <SDL.h>
 
-#include "Game.h"
 #include "Images.h"
-#include "Board.h"
-#include "Soko.h"
 #include "View.h"
 
 extern char *BOARD;
@@ -23,17 +20,13 @@ extern const char BOARD_TARGET;
 extern const char BOARD_BOXTARGET;
 extern const char BOARD_WALL;
 
-char board_get(int x, int y);
+uint8_t board_targets_left();
 
-void board_set(int x, int y, char b);
+char board_get(uint8_t x, uint8_t y);
 
-int board_targets_left();
+void board_set(uint8_t x, uint8_t y, char b);
 
-//void show_fields(const int xy[][2], const int length);
-
-//void show_field(const int x, const int y);
-
-void show_board();
+void draw_board();
 
 void deinitialize_board();
 

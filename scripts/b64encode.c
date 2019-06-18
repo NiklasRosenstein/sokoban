@@ -311,7 +311,7 @@ bool generate_h(char *variable, char *out_file) {
     append_string(&out, &out_len, variable);
     append_string(&out, &out_len, "_length;\n");
 
-    append_string(&out, &out_len, "\nextern char *b64image_");
+    append_string(&out, &out_len, "\nextern const char *b64image_");
     append_string(&out, &out_len, variable);
     append_string(&out, &out_len, ";\n");
 
@@ -378,7 +378,7 @@ bool generate_c(char *b64, char *variable, char *out_file) {
     append_string(&out, &out_len, variable);
     append_string(&out, &out_len, "_length = 0;\n");
 
-    append_string(&out, &out_len, "\nchar *b64image_");
+    append_string(&out, &out_len, "\nconst char *b64image_");
     append_string(&out, &out_len, variable);
     append_string(&out, &out_len, " = \n");
 
