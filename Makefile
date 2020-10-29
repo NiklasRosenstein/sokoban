@@ -1,5 +1,3 @@
-CC         :=  clang
-
 FLAGS      :=  -std=c99
 FLAGS      +=  -Wall -Wextra -Wpedantic
 FLAGS      +=  -Wno-overlength-strings
