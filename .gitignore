@@ -26,5 +26,8 @@ $RECYCLE.BIN/
 # b64 encoding script
 scripts/b64encode
 
+# C-encoded image files.
+src/Image_*.[ch]
+
 # Build directory
 build/

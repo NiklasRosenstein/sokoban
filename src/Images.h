@@ -17,12 +17,12 @@
 #include "Image_wall.h"
 #include "Levels.h"
 
-SDL_Texture *IMG_BOX;
-SDL_Texture *IMG_BOXTARGET;
-SDL_Texture *IMG_FREE;
-SDL_Texture *IMG_PLAYER;
-SDL_Texture *IMG_TARGET;
-SDL_Texture *IMG_WALL;
+extern SDL_Texture *IMG_BOX;
+extern SDL_Texture *IMG_BOXTARGET;
+extern SDL_Texture *IMG_FREE;
+extern SDL_Texture *IMG_PLAYER;
+extern SDL_Texture *IMG_TARGET;
+extern SDL_Texture *IMG_WALL;
 
 void deinitialize_images();
 

@@ -7,7 +7,7 @@
 
 #include "View.h"
 
-bool MENU_SHOWN;
+extern bool MENU_SHOWN;
 
 void show_menu();
 

@@ -1,6 +1,13 @@
 
 #include "Images.h"
 
+SDL_Texture *IMG_BOX;
+SDL_Texture *IMG_BOXTARGET;
+SDL_Texture *IMG_FREE;
+SDL_Texture *IMG_PLAYER;
+SDL_Texture *IMG_TARGET;
+SDL_Texture *IMG_WALL;
+
 /**
  * @brief Number of different images in this game.
  */
