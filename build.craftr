@@ -9,7 +9,7 @@ compile_resources('images') {
 }
 
 cxx.compile('main') {
-  depends_on 'scripts:images'
+  depends_on 'images'
   sources = glob('src/*.c')
   pkg_config 'sdl2', 'sdl2_image'
 }

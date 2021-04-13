@@ -23,7 +23,7 @@ class ResourceCompiler(IConfigurable):
     if self.data_files is None:
       raise RuntimeError('data_files was not set')
     def processor_task_name = 'encode' + self.task_name.capitalize()
-    project.processor(processor_task_name) {
+    self.project.processor(processor_task_name) {
       inputs = self.data_files
       outputs = inputs.flatmap(f -> build_directory / 'resources' / f.with_suffix('.c').name)
       additional_vars = {
@@ -33,8 +33,8 @@ class ResourceCompiler(IConfigurable):
       executable = tasks.b64encode.executable
       args = ['$in', '-c', '$out', '-n', '$n', '-h', '$h']
     }
-    def processor_task = tasks[processor_task_name]
-    project.cxx.compile(self.task_name) {
+    def processor_task = self.project.tasks[processor_task_name]
+    self.project.cxx.compile(self.task_name) {
       sources = processor_task.outputs
       public_include_paths = [processor_task.outputs.get()[0].parent]
       produces = 'static_library'
