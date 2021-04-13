@@ -2,20 +2,18 @@
 
 apply 'cxx'
 apply 'run'
+apply from_project='scripts'
 
-def scripts = subproject('scripts')
-
-scripts.b64encode('images') {
+compile_resources('images') {
   data_files = glob('resources/*.png')
 }
 
 cxx.compile('main') {
   depends_on 'scripts:images'
   sources = glob('src/*.c')
-  pkg_config 'sdl2'
-  pkg_config 'sdl2_image'
+  pkg_config 'sdl2', 'sdl2_image'
 }
 
 run {
-  dependencies.append tasks.main
+  depends_on 'main'
 }
