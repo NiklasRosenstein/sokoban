@@ -1,0 +1,21 @@
+# type: ignore
+
+apply 'cxx'
+apply 'run'
+
+def scripts = subproject('scripts')
+
+scripts.b64encode('images') {
+  data_files = glob('resources/*.png')
+}
+
+cxx.compile('main') {
+  depends_on 'scripts:images'
+  sources = glob('src/*.c')
+  pkg_config 'sdl2'
+  pkg_config 'sdl2_image'
+}
+
+run {
+  dependencies.append tasks.main
+}

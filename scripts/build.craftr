@@ -1,0 +1,44 @@
+
+from craftr.core.closure import IConfigurable
+
+apply 'cxx'
+apply 'processor'
+
+cxx.compile('b64encode') {
+  sources = ['scripts/b64encode.c']
+  #product_name = name  # TODO(NiklasRosenstein): Name doesn't resolve to task name..
+}
+
+
+class B64encodeBuilder(IConfigurable):
+
+  def __init__(self, task_name):
+    self.task_name = task_name
+    self.data_files = None
+
+  def configure(self, closure):
+    closure.apply(self)
+    if self.data_files is None:
+      raise RuntimeError('data_files was not set')
+    def processor_task_name = 'encode' + self.task_name.capitalize()
+    processor(processor_task_name) {
+      inputs = self.data_files
+      outputs = inputs.flatmap(f -> build_directory / 'resources' / f.with_suffix('.c').name)
+      additional_vars = {
+        'h': outputs.flatmap(f -> f.with_suffix('.h')),
+        'n': inputs.flatmap(f -> f.stem),
+      }
+      executable = tasks.b64encode.executable
+      args = ['$in', '-c', '$out', '-n', '$n', '-h', '$h']
+    }
+    def processor_task = tasks[processor_task_name]
+    cxx.compile(self.task_name) {
+      sources = processor_task.outputs
+      public_include_paths = [processor_task.outputs.get()[0].parent]
+      produces = 'static_library'
+      dependencies.append processor_task
+      product_name = self.task_name
+    }
+
+
+project.add_extension('b64encode', B64encodeBuilder)

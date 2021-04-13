@@ -31,3 +31,6 @@ src/Image_*.[ch]
 
 # Build directory
 build/
+.build/
+.craftr/
+*.dSYM/
