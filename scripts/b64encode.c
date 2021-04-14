@@ -103,6 +103,7 @@ int main(int argc, char *argv[]) {
             printf("Could not generate .h file content\n");
             return 1;
         }
+        printf("Generated %s\n", hfile);
     }
 
     // Generate .c file
@@ -125,6 +126,7 @@ int main(int argc, char *argv[]) {
             return 1;
         }
         free(b64_buffer);
+        printf("Generated %s\n", cfile);
     }
 
 
